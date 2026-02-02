@@ -1,62 +1,160 @@
+#!/usr/bin/env python3
 """
-Write a Python script to breach a fictional secure system by guessing a 4-digit PIN code. The PIN code will be randomly generated, and you'll need to use a brute-force approach to crack it.
+pin_bruteforce_sim.py — Educational PIN brute-force simulator
 
-Constraints:
+This script simulates brute-forcing a 4-digit PIN (0000-9999) against a local mock system.
+**SAFETY NOTE:** This is an offline simulation for learning only. Do NOT use this
+against any real or remotely accessible system.
 
-1. The PIN code consists of 4 digits (0-9).
-2. The script should iterate through all possible combinations (0000-9999) to guess the correct PIN.
-3. When the correct PIN is guessed, the script should exit and display the correct PIN.
-
-Mock System Response:
-
-To simulate the secure system, I'll respond to your script's attempts with either "ACCESS DENIED" (if the PIN is incorrect) or "SYSTEM BREACHED" (if the PIN is correct).
+Features:
+- Clean function separation for generate/attempt/brute-force logic
+- CLI flags to control verbosity, deterministic seeding, and fixed PIN for tests
+- Logging instead of uncontrolled prints
+- Small progress indicator and summary output
+- Unit-testable design
 """
 
+from __future__ import annotations
+import argparse
+import logging
 import random
+import sys
+import time
+from typing import Tuple, Optional
 
-# Mock system setup: Randomly generate a 4-digit PIN code
-actual_pin = f"{random.randint(0, 9999):04d}"
+# --- Constants and configuration ---
+PIN_LENGTH = 4
+MAX_COMBINATIONS = 10 ** PIN_LENGTH  # 10000 for 4-digit PINs
 
-def attempt_pin(guess):
+
+# --- Mock system interface (kept intentionally simple & local) ---
+def generate_pin(seed: Optional[int] = None) -> str:
     """
-    Simulates the system response to a PIN guess.
-    Returns "ACCESS DENIED" if the guess is incorrect,
-    and "SYSTEM BREACHED" if the guess is correct.
+    Generate a random PIN formatted as zero-padded string of length PIN_LENGTH.
+    If `seed` is provided, the RNG is seeded for deterministic output (useful for testing).
     """
-    if guess == actual_pin:
-        return "SYSTEM BREACHED"
+    if seed is not None:
+        random.seed(seed)
+    n = random.randint(0, MAX_COMBINATIONS - 1)
+    return f"{n:0{PIN_LENGTH}d}"
+
+
+def attempt_pin(guess: str, actual_pin: str) -> str:
+    """
+    Mock system response. Returns 'SYSTEM BREACHED' on correct guess,
+    otherwise returns 'ACCESS DENIED'.
+    """
+    return "SYSTEM BREACHED" if guess == actual_pin else "ACCESS DENIED"
+
+
+# --- Brute-force logic ---
+def brute_force(
+    actual_pin: str,
+    *,
+    verbose: bool = False,
+    max_attempts: Optional[int] = None,
+    show_progress: bool = True
+) -> Tuple[Optional[str], int]:
+    """
+    Try all possible PINs from "0000" to "9999". Returns (found_pin, attempts_made).
+    If not found within max_attempts (if provided), returns (None, attempts_made).
+    """
+    attempts = 0
+    for num in range(MAX_COMBINATIONS):
+        attempts += 1
+        if max_attempts is not None and attempts > max_attempts:
+            # Reached user-specified attempt limit
+            return None, attempts - 1
+
+        guess = f"{num:0{PIN_LENGTH}d}"
+        response = attempt_pin(guess, actual_pin)
+
+        if verbose:
+            logging.debug("Trying PIN %s -> %s", guess, response)
+
+        # optional progress print: every 10% or every 1000 attempts (configurable)
+        if show_progress and (num % 1000 == 0 or num == MAX_COMBINATIONS - 1):
+            percent = (num + 1) / MAX_COMBINATIONS * 100
+            logging.info("Progress: %d/%d (%.1f%%)", num + 1, MAX_COMBINATIONS, percent)
+
+        if response == "SYSTEM BREACHED":
+            return guess, attempts
+
+    return None, attempts
+
+
+# --- CLI / main ---
+def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
+    p = argparse.ArgumentParser(
+        prog="pin_bruteforce_sim",
+        description="Educational local simulator: brute-force a 4-digit PIN (0000-9999).",
+    )
+    p.add_argument("--seed", "-s", type=int, default=None,
+                   help="Optional RNG seed for reproducible PIN generation (testing only).")
+    p.add_argument("--fixed-pin", "-p", type=str, default=None,
+                   help="Skip RNG and use the provided 4-digit PIN (e.g. 0042). For testing only.")
+    p.add_argument("--max-attempts", "-m", type=int, default=None,
+                   help="Stop after N attempts (useful for limiting runtime during demos).")
+    p.add_argument("--quiet", "-q", action="store_true",
+                   help="Quiet mode: minimal info (only final summary).")
+    p.add_argument("--verbose", "-v", action="store_true",
+                   help="Verbose debug mode (logs each attempt at DEBUG level).")
+    p.add_argument("--no-progress", action="store_true",
+                   help="Disable periodic progress info.")
+    return p.parse_args(argv)
+
+
+def configure_logging(verbose: bool, quiet: bool) -> None:
+    if quiet:
+        level = logging.WARNING
+    elif verbose:
+        level = logging.DEBUG
     else:
-        return "ACCESS DENIED"
+        level = logging.INFO
 
-# Brute-force attack: Try all possible 4-digit PINs
-for pin in range(10000):  # 0000 to 9999
-    guess = f"{pin:04d}"  # Format the PIN as a 4-digit string
-    response = attempt_pin(guess)
-    print(f"Trying PIN: {guess} - {response}")
-    
-    if response == "SYSTEM BREACHED":
-        print(f"Correct PIN found: {guess}")
-        break
-    
-"""
-actual_pin = f"{random.randint(0, 9999):04d}" 
-04d --- what is it???
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s %(levelname)-5s: %(message)s",
+        datefmt="%H:%M:%S",
+    )
 
 
-The 04d is a formatting directive in Python's f-string that is used to format numbers. Here's what it does:
+def main(argv: Optional[list[str]] = None) -> int:
+    args = parse_args(argv)
+    configure_logging(args.verbose, args.quiet)
 
-0: Pads the number with leading zeros if it's shorter than 4 digits.
-4: Ensures that the output will be 4 characters long.
-d: Stands for "decimal integer," meaning the number will be treated as an integer and displayed as a base-10 number.
-In this context, f"{random.randint(0, 9999):04d}" does the following:
+    # Validate fixed PIN if provided
+    if args.fixed_pin is not None:
+        if len(args.fixed_pin) != PIN_LENGTH or not args.fixed_pin.isdigit():
+            logging.error("Invalid --fixed-pin value. Must be exactly %d digits.", PIN_LENGTH)
+            return 2
+        actual_pin = args.fixed_pin
+        logging.info("Using fixed PIN (testing mode).")
+    else:
+        actual_pin = generate_pin(seed=args.seed)
+        logging.info("Generated random PIN (local simulation).")
 
-random.randint(0, 9999): Generates a random integer between 0 and 9999.
-:04d: Formats the number to ensure it is exactly 4 digits long, padding with leading zeros if necessary.
-For example:
+    logging.debug("Actual PIN (for debugging only): %s", actual_pin)
 
-If the random number is 42, it will be formatted as "0042".
-If the random number is 7, it will be formatted as "0007".
-If the random number is 1234, it will remain "1234".
-This ensures that all PIN codes are exactly 4 digits long, which is important for consistency in your brute-force script.
+    start_time = time.time()
+    found_pin, attempts = brute_force(
+        actual_pin,
+        verbose=args.verbose,
+        max_attempts=args.max_attempts,
+        show_progress=not args.no_progress and not args.verbose,
+    )
+    elapsed = time.time() - start_time
 
-"""
+    if found_pin is not None:
+        logging.info("SYSTEM BREACHED — Correct PIN: %s (attempts: %d, time: %.3fs)", found_pin, attempts, elapsed)
+        # Also print to stdout for easy capture by demos/tests
+        print(f"Correct PIN found: {found_pin} (attempts={attempts}, elapsed={elapsed:.3f}s)")
+        return 0
+    else:
+        logging.warning("PIN not found within limit. Attempts: %d, time: %.3fs", attempts, elapsed)
+        print(f"PIN not found (attempts={attempts}, elapsed={elapsed:.3f}s)")
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

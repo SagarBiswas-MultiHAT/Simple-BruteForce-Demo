@@ -1,0 +1,50 @@
+name: CI
+
+# Run on pull request and push to main (or default branch)
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      # Step 1: Checkout repo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Setup Python
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Step 3: Install dependencies (runtime + dev)
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      # Step 4: Static format check
+      - name: Check code formatting
+        run: |
+          black --check .
+
+      # Step 5: Run unit tests
+      - name: Run tests
+        run: |
+          pytest -q
+
+      # Step 6: Run the brute-force script in deterministic mode
+      - name: Run brute-force script with fixed PIN
+        run: |
+          python "Brute-Force-PIN-Cracker.py" --fixed-pin 0000 --quiet

@@ -4,92 +4,137 @@
 
 Welcome to the **Brute-Force PIN Cracker** project! This is a Python script that simulates a brute-force attack to guess a randomly generated 4-digit PIN code. The script attempts all possible combinations of 4 digits (from 0000 to 9999) until it finds the correct one. The mock system responds with either "ACCESS DENIED" or "SYSTEM BREACHED" based on the guessed PIN.
 
-## Features
+````
+PS H:\GitHub Clone\Simple-BruteForce-Demo> python .\Brute-Force-PIN-Cracker.py
+16:43:13 INFO : Generated random PIN (local simulation).
+16:43:13 INFO : Progress: 1/10000 (0.0%)
+ # Brute-Force PIN Cracker — Educational Simulator
 
-- Simulates a brute-force attack to crack a 4-digit PIN code.
-- Iterates through all possible combinations (0000-9999).
-- Provides feedback for each guess, displaying either "ACCESS DENIED" or "SYSTEM BREACHED".
-- Once the correct PIN is guessed, the script exits and prints the successful guess.
+ A small, self-contained Python simulation that demonstrates a brute-force attack against a local, mock 4-digit PIN (0000–9999). This project is purely educational: it illustrates how brute-force works, why short numeric PINs are weak, and how to write clean, testable scripts.
 
-## How to Run
+ Important: this repository contains an offline simulation only. Do NOT use this code against any real or remotely accessible systems. It's intended for learning and experimentation on local machines.
 
-To run the script, ensure you have Python 3.x installed on your machine.
+ Results and behavior are deterministic when using the `--seed` or `--fixed-pin` options, which makes the project easy to test and inspect.
 
-1. Clone the repository to your local machine:
+ **Files of interest**
+ - `Brute-Force-PIN-Cracker.py` — main script (executable with `python`).
 
-   ```bash
-   git clone https://github.com/yourusername/Brute-Force-PIN-Cracker.git
-   ```
+ ## Quick start
 
-2. Navigate to the project directory:
+ Prerequisites: Python 3.10+ (3.11 or 3.12 recommended).
 
-   ```bash
-   cd Brute-Force-PIN-Cracker
-   ```
+ Clone and run:
 
-3. Run the script:
+ ```bash
+ git clone https://github.com/yourusername/Simple-BruteForce-Demo.git
+ cd Simple-BruteForce-Demo
+ python Brute-Force-PIN-Cracker.py
+````
 
-   ```bash
-   python pin_cracker.py
-   ```
+Run with a fixed PIN (fast and reproducible):
 
-4. The script will begin attempting all PIN combinations, printing the result for each guess until the correct PIN is found.
-
-## How It Works
-
-- The script generates a random 4-digit PIN.
-- It then simulates guessing every possible PIN, from 0000 to 9999.
-- After each guess, the mock system responds:
-  - If the guess is correct, the response is "SYSTEM BREACHED" and the script exits, displaying the correct PIN.
-  - If the guess is incorrect, the response is "ACCESS DENIED".
-- The process continues until the correct PIN is guessed.
-
-### Example Output:
-
-```
-Trying PIN: 0000 - ACCESS DENIED
-Trying PIN: 0001 - ACCESS DENIED
-Trying PIN: 0002 - ACCESS DENIED
-...
-Trying PIN: 1234 - SYSTEM BREACHED
-Correct PIN found: 1234
+```bash
+python Brute-Force-PIN-Cracker.py --fixed-pin 0000 --quiet
 ```
 
-## Code Explanation
+Run with a deterministic random PIN (useful for demos/tests):
 
-The key part of the script is the use of the brute-force method to generate all possible 4-digit combinations using a `for` loop:
-
-```python
-for pin in range(10000):
-    guess = f"{pin:04d}"  # Formats the PIN as a 4-digit string
-    response = attempt_pin(guess)
-    print(f"Trying PIN: {guess} - {response}")
-    
-    if response == "SYSTEM BREACHED":
-        print(f"Correct PIN found: {guess}")
-        break
+```bash
+python Brute-Force-PIN-Cracker.py --seed 42
 ```
 
-The PIN is formatted using the `04d` formatting directive, ensuring that each guess is exactly 4 digits long, even if the number is less than 4 digits.
+CLI highlights
 
-## Contributions
+- `--fixed-pin / -p`: Provide an exact 4-digit PIN to skip RNG (testing/demo).
+- `--seed / -s`: Seed the RNG so the generated PIN is reproducible.
+- `--max-attempts / -m`: Stop after N attempts (handy for demos).
+- `--quiet / -q`: Minimal output (only final summary).
+- `--verbose / -v`: Debug-level logging (prints attempt debug lines).
+- `--no-progress`: Suppress periodic progress messages.
 
-Feel free to fork the repository and contribute! You can:
+## What the script does (short)
 
-- Fix bugs or issues.
-- Enhance the brute-force logic or improve the simulation.
-- Add features like logging or progress indicators.
-- Improve code readability or performance.
+1.  Generate a 4-digit PIN (random or fixed).
+2.  Iterate from `0000` to `9999`, calling the local `attempt_pin` function.
+3.  `attempt_pin` returns `SYSTEM BREACHED` on a correct guess or `ACCESS DENIED` otherwise.
+4.  On success the script prints the correct PIN, number of attempts and elapsed time, then exits with code `0`.
 
-To contribute, please fork the repository, make your changes, and create a pull request.
+Why this is useful
+
+- Demonstrates algorithmic complexity for brute-force attacks.
+- Shows how determinism (seeding) aids testing.
+- Demonstrates clean CLI design, logging, and small, testable functions.
+
+## Tests and development
+
+This repository includes a tiny test suite so the CI workflow can validate functionality automatically.
+
+Install dev dependencies locally:
+
+```bash
+python -m pip install -r requirements-dev.txt
+```
+
+Run tests:
+
+```bash
+pytest -q
+```
+
+Run formatting check (Black):
+
+```bash
+black --check .
+```
+
+If you want to apply formatting:
+
+```bash
+black .
+```
+
+## Continuous Integration (GitHub Actions)
+
+This project includes a GitHub Actions workflow at `.github/workflows/ci.yml` that:
+
+- checks out the code
+- installs Python and dependencies
+- runs `black --check` (formatting enforcement)
+- runs the test suite (`pytest`)
+- runs the script in a deterministic mode to ensure the runnable example executes
+
+The CI is configured to run on pushes and pull requests to `main` / `master` and tests multiple Python versions.
+
+## Code notes (for readers)
+
+- The code is intentionally simple and split into small functions:
+  - `generate_pin(seed: Optional[int]) -> str` — returns a zero-padded PIN string.
+  - `attempt_pin(guess: str, actual_pin: str) -> str` — mock response function.
+  - `brute_force(...) -> Tuple[Optional[str], int]` — core brute-force loop, returns the found pin and attempts used.
+- Logging is used instead of uncontrolled prints so behavior can be quieted or made verbose via CLI flags.
+
+## Security & ethics
+
+This repository is for learning only. Do not, under any circumstances, use this code to target systems you do not own or have explicit permission to test. Performing unauthorized attacks is illegal and unethical.
+
+## Contributing
+
+Contributions are welcome: open issues or pull requests for bug fixes, clearer docs, or additional demo scenarios. Suggested small improvements:
+
+- Add a timing benchmark for different PIN lengths.
+- Add simulated rate limiting to demonstrate real-world mitigations.
+
+When contributing:
+
+1.  Fork the repo.
+2.  Create a branch for your change.
+3.  Run tests and formatting locally.
+4.  Open a pull request describing your change.
 
 ## License
 
-This project is open source and available under the [MIT License](LICENSE).
+MIT — see the `LICENSE` file in this repository.
 
 ---
 
-Thank you for checking out the **Brute-Force PIN Cracker**. Enjoy experimenting with the code and feel free to reach out with any suggestions or feedback!
-```
-
-This `README.md` provides a clear explanation of the project, how to run the script, and how it works, maintaining an approachable, human-written tone throughout.
+If you'd like, I can also tidy formatting, add more tests, or add a `pyproject.toml` to pin tooling versions. Which would you like next?
