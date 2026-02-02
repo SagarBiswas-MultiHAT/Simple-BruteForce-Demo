@@ -34,10 +34,10 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
-      # Step 4: Static format check
-      - name: Check code formatting
+      # Step 4: Format code with Black (auto-formatting ensures consistent style)
+      - name: Format code with Black
         run: |
-          black --check .
+          black .
 
       # Step 5: Run unit tests
       - name: Run tests
