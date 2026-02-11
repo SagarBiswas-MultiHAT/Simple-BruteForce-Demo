@@ -17,7 +17,7 @@
 
 This repository is the complete experience for understanding brute-force attacks and the defenses that slow them down. The entire simulation runs in the browser, so there is no CLI or Flask server required—just open `index.html`, flip the knobs, and watch the animation.
 
-What you get:
+What we get:
 
 - A GitHub Pages-ready demo that runs locally or can be deployed in seconds.
 - A browser-driven simulation that models attempts, rate limiting, lockouts, captcha penalties, jitter, and reporting.
