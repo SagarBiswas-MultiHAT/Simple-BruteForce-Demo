@@ -1,4 +1,19 @@
-# Brute-Force Lab — Educational Simulation and Defensive Learning
+# Bruteforce Lab 
+
+— Educational Simulation and Defensive Learning
+
+<div align="right">
+
+[![CI](https://github.com/SagarBiswas-MultiHAT/BruteforceLab1/actions/workflows/ci.yml/badge.svg)](https://github.com/SagarBiswas-MultiHAT/BruteforceLab1/actions) [![Release](https://img.shields.io/github/v/release/SagarBiswas-MultiHAT/BruteforceLab1)](https://github.com/SagarBiswas-MultiHAT/BruteforceLab1/releases) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Pages](https://img.shields.io/website?url=https%3A%2F%2FSagarBiswas-MultiHAT.github.io%2FBruteforceLab1)](https://SagarBiswas-MultiHAT.github.io/BruteforceLab1) [![pytest](https://img.shields.io/badge/tests-pytest-brightgreen.svg)](#)
+
+---
+
+![](https://imgur.com/1Qy6g3x.png)
+
+---
+
+</div>
+
 
 This repository is the complete experience for understanding brute-force attacks and the defenses that slow them down. The entire simulation runs in the browser, so there is no CLI or Flask server required—just open `index.html`, flip the knobs, and watch the animation.
 
