@@ -31,20 +31,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
-      # Step 4: Format code with Black (auto-formatting ensures consistent style)
-      - name: Format code with Black
+      # Step 4: Lint Python files with Black
+      - name: Lint with Black
         run: |
-          black .
+          black --check tests
 
-      # Step 5: Run unit tests
+      # Step 5: Run the UI smoke test suite
       - name: Run tests
         run: |
-          pytest -q
-
-      # Step 6: Run the brute-force script in deterministic mode
-      - name: Run brute-force script with fixed PIN
-        run: |
-          python "Brute-Force-PIN-Cracker.py" --fixed-pin 0000 --quiet
+          pytest tests/test_ui_assets.py

@@ -1,1 +1,1 @@
-# No runtime dependencies required for this demo
+# The demo is pure front-end—no runtime Python dependencies are required.

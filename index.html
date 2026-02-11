@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Brute-Force Lab | Defensive Learning Demo</title>
+    <meta name="description"
+        content="Interactive, safe brute-force simulation with defenses, metrics, and reporting." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+    <div class="bg-sheen"></div>
+    <header class="hero">
+        <div>
+            <p class="eyebrow">Educational Security Demo</p>
+            <h1>Brute-Force Lab</h1>
+            <p class="subhead">
+                A safe, local simulation that shows how brute-force attacks work and how
+                defenses slow them down. No real targets. No real credentials. Just clean,
+                visual learning.
+            </p>
+            <div class="hero-actions">
+                <button class="btn btn-primary" id="startBtn">Start Simulation</button>
+                <button class="btn btn-ghost" id="pauseBtn" disabled>Pause</button>
+                <button class="btn btn-ghost" id="resetBtn">Reset</button>
+            </div>
+            <div class="hero-note" role="note">
+                Safety: This page is a local simulation only. Do not use brute-force against
+                any real system without explicit permission.
+            </div>
+        </div>
+        <div class="hero-card">
+            <div class="hero-card__title">Live Status</div>
+            <div class="status-grid">
+                <div>
+                    <div class="label">Status</div>
+                    <div class="value" id="statusText">Idle</div>
+                </div>
+                <div>
+                    <div class="label">Attempts</div>
+                    <div class="value mono" id="attemptsText">0</div>
+                </div>
+                <div>
+                    <div class="label">Attempts / sec</div>
+                    <div class="value mono" id="rateText">0</div>
+                </div>
+                <div>
+                    <div class="label">Elapsed</div>
+                    <div class="value mono" id="elapsedText">0.0s</div>
+                </div>
+                <div>
+                    <div class="label">ETA</div>
+                    <div class="value mono" id="etaText">--</div>
+                </div>
+                <div>
+                    <div class="label">Outcome</div>
+                    <div class="value" id="outcomeText">--</div>
+                </div>
+            </div>
+            <canvas id="rateChart" width="360" height="120" aria-label="Attempts per second chart"></canvas>
+        </div>
+    </header>
+
+    <main class="layout">
+        <section class="panel">
+            <h2>Attack Setup</h2>
+            <div class="grid-two">
+                <label class="field">
+                    <span>PIN length</span>
+                    <input id="pinLength" type="number" min="4" max="8" value="4" />
+                </label>
+                <label class="field">
+                    <span>Character set</span>
+                    <select id="charset">
+                        <option value="numeric" selected>Numeric (0-9)</option>
+                        <option value="alphabet">Alphabet (a-z)</option>
+                        <option value="alnum">Alphanumeric (0-9, a-z)</option>
+                        <option value="full">Alphanumeric (0-9, a-z, A-Z)</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Fixed PIN (optional)</span>
+                    <input id="fixedPin" type="text" placeholder="e.g. 0042, sagar, abc123" />
+                </label>
+                <label class="field">
+                    <span>Max attempts (optional)</span>
+                    <input id="maxAttempts" type="number" min="1" placeholder="e.g. 5000" />
+                </label>
+            </div>
+            <div class="metrics">
+                <div class="metric">
+                    <div class="label">Search space</div>
+                    <div class="value mono" id="spaceText">10,000</div>
+                </div>
+                <div class="metric">
+                    <div class="label">Entropy</div>
+                    <div class="value mono" id="entropyText">13.3 bits</div>
+                </div>
+                <div class="metric">
+                    <div class="label">Estimated time</div>
+                    <div class="value mono" id="estimateText">~5.0s</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Defenses</h2>
+            <div class="grid-two">
+                <label class="field">
+                    <span>Rate limit (attempts/sec)</span>
+                    <input id="rateLimit" type="range" min="10" max="2000" value="500" />
+                    <div class="range-value mono" id="rateLimitValue">500</div>
+                </label>
+                <label class="field switch">
+                    <span>Captcha challenge</span>
+                    <input id="captcha" type="checkbox" />
+                    <span class="switch-indicator"></span>
+                </label>
+                <label class="field switch">
+                    <span>Lockout after failed attempts</span>
+                    <input id="lockout" type="checkbox" />
+                    <span class="switch-indicator"></span>
+                </label>
+                <label class="field">
+                    <span>Lockout threshold</span>
+                    <input id="lockoutThreshold" type="number" min="1" value="100" />
+                </label>
+                <label class="field">
+                    <span>Lockout seconds</span>
+                    <input id="lockoutSeconds" type="number" min="1" value="30" />
+                </label>
+                <label class="field">
+                    <span>Jitter (%)</span>
+                    <input id="jitter" type="range" min="0" max="30" value="10" />
+                    <div class="range-value mono" id="jitterValue">10%</div>
+                </label>
+            </div>
+            <div class="note">
+                These defenses are simulated to show how protections reduce brute-force
+                effectiveness in real-world systems.
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Run Modes</h2>
+            <div class="grid-two">
+                <label class="field switch">
+                    <span>Use local API (Flask)</span>
+                    <input id="useApi" type="checkbox" />
+                    <span class="switch-indicator"></span>
+                </label>
+                <label class="field">
+                    <span>API endpoint</span>
+                    <input id="apiUrl" type="url" value="http://127.0.0.1:5000/api/bruteforce" />
+                </label>
+            </div>
+            <div class="hero-actions">
+                <button class="btn btn-secondary" id="runApiBtn">Run via API</button>
+                <button class="btn btn-ghost" id="exportBtn">Download Report</button>
+            </div>
+        </section>
+
+        <section class="panel panel-wide">
+            <h2>Event Log</h2>
+            <div class="log" id="log"></div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div>Built for learning defensive security. No real systems harmed.</div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

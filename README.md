@@ -1,140 +1,98 @@
-# Brute-Force PIN Cracker
+# Brute-Force Lab — Educational Simulation and Defensive Learning
 
-## Overview
+This repository is the complete experience for understanding brute-force attacks and the defenses that slow them down. The entire simulation runs in the browser, so there is no CLI or Flask server required—just open `index.html`, flip the knobs, and watch the animation.
 
-Welcome to the **Brute-Force PIN Cracker** project! This is a Python script that simulates a brute-force attack to guess a randomly generated 4-digit PIN code. The script attempts all possible combinations of 4 digits (from 0000 to 9999) until it finds the correct one. The mock system responds with either "ACCESS DENIED" or "SYSTEM BREACHED" based on the guessed PIN.
+What you get:
 
-````
-PS H:\GitHub Clone\Simple-BruteForce-Demo> python .\Brute-Force-PIN-Cracker.py
-16:43:13 INFO : Generated random PIN (local simulation).
-16:43:13 INFO : Progress: 1/10000 (0.0%)
- # Brute-Force PIN Cracker — Educational Simulator
+- A GitHub Pages-ready demo that runs locally or can be deployed in seconds.
+- A browser-driven simulation that models attempts, rate limiting, lockouts, captcha penalties, jitter, and reporting.
+- A lightweight smoke-test suite that ensures the markup and script stay aligned.
 
- A small, self-contained Python simulation that demonstrates a brute-force attack against a local, mock 4-digit PIN (0000–9999). This project is purely educational: it illustrates how brute-force works, why short numeric PINs are weak, and how to write clean, testable scripts.
+Important: This repository does not target real systems. Everything here is a closed, local simulation for learning. Do not use these techniques against any system without explicit permission.
 
- Important: this repository contains an offline simulation only. Do NOT use this code against any real or remotely accessible systems. It's intended for learning and experimentation on local machines.
+## Quick start (web demo)
 
- Results and behavior are deterministic when using the `--seed` or `--fixed-pin` options, which makes the project easy to test and inspect.
-
- **Files of interest**
- - `Brute-Force-PIN-Cracker.py` — main script (executable with `python`).
-
- ## Quick start
-
- Prerequisites: Python 3.10+ (3.11 or 3.12 recommended).
-
- Clone and run:
-
- ```bash
- git clone https://github.com/yourusername/Simple-BruteForce-Demo.git
- cd Simple-BruteForce-Demo
- python Brute-Force-PIN-Cracker.py
-````
-
-Run with a fixed PIN (fast and reproducible):
+Open the demo locally:
 
 ```bash
-python Brute-Force-PIN-Cracker.py --fixed-pin 0000 --quiet
+start index.html
 ```
 
-Run with a deterministic random PIN (useful for demos/tests):
+Host it on GitHub Pages:
 
-```bash
-python Brute-Force-PIN-Cracker.py --seed 42
-```
+1. Push this repo to GitHub.
+2. Go to Settings -> Pages.
+3. Source: Deploy from branch, then select your default branch and root.
+4. Save. Your demo will be available at the Pages URL.
 
-CLI highlights
+The demo is fully static. All attack logic is simulated inside the browser for safety and clarity.
 
-- `--fixed-pin / -p`: Provide an exact 4-digit PIN to skip RNG (testing/demo).
-- `--seed / -s`: Seed the RNG so the generated PIN is reproducible.
-- `--max-attempts / -m`: Stop after N attempts (handy for demos).
-- `--quiet / -q`: Minimal output (only final summary).
-- `--verbose / -v`: Debug-level logging (prints attempt debug lines).
-- `--no-progress`: Suppress periodic progress messages.
+## Attack setup
 
-## What the script does (short)
+Every control on the hero panel feeds into the simulation, and the metrics update instantly so you can see the math behind brute-force attacks.
 
-1.  Generate a 4-digit PIN (random or fixed).
-2.  Iterate from `0000` to `9999`, calling the local `attempt_pin` function.
-3.  `attempt_pin` returns `SYSTEM BREACHED` on a correct guess or `ACCESS DENIED` otherwise.
-4.  On success the script prints the correct PIN, number of attempts and elapsed time, then exits with code `0`.
+- **PIN length** & **Character set**: Together they define the search space. A `4`-digit numeric PIN has 10,000 combinations; increasing length or adding alphabetic characters multiplies that space exponentially, which is reflected in the metrics below.
+- **Fixed PIN (optional)**: Seed the simulation with a known PIN to reproduce a successful attack instantly. The field enforces the PIN length and charset you selected to avoid invalid guesses.
+- **Max attempts (optional)**: Tell the demo to stop after `N` attempts so you can explore how partial sweeps behave. Useful for teaching or demonstrating patience/resilience metrics.
 
-Why this is useful
+The **Search space**, **Entropy**, and **Estimated time** tiles show how configuration choices impact the attacker timeline and how defenses stretch out each attempt.
 
-- Demonstrates algorithmic complexity for brute-force attacks.
-- Shows how determinism (seeding) aids testing.
-- Demonstrates clean CLI design, logging, and small, testable functions.
+## Defenses
+
+Each toggle under "Defenses" modifies the simulated timing model:
+
+- **Rate limit (attempts/sec)**: A ceiling on how fast guesses are tried. The slider runs from 10 to 2000 attempts/sec, and the display shows the live value. Lower rates stretch out the attack and make metrics like ETA go up.
+- **Captcha challenge**: When enabled, the demo applies a 2.5× penalty to the rate limit to emulate human verification delays. This models any challenge-response barrier that slows a brute-force script.
+- **Lockout after failed attempts**: Turns on the lockout logic. The simulation pauses for `Lockout seconds` every `Lockout threshold` attempts, demonstrating how account lockouts can choke automation.
+- **Lockout threshold**: How many guesses the attacker can make before the account locks out. Lower thresholds are stricter; higher thresholds give more room but still introduce penalties.
+- **Lockout seconds**: The duration of each lockout period. Combine a short threshold with a long lockout to show how even a few wrong guesses can stall an attacker for minutes.
+- **Jitter (%)**: Adds randomness to the attempts-per-second rate to model network latency, throttling, or inconsistent backoff. Higher jitter introduces more visible variability in the chart and makes ETA estimates bounce around, illustrating how unpredictability frustrates attackers.
+
+## Web demo features
+
+- Interactive brute-force simulation with real-time metrics
+- Simulated defenses: rate limiting, lockout, captcha, jitter
+- Configurable PIN policy (length + charset)
+- Estimated time-to-crack and entropy
+- Downloadable JSON report
+- Optional local API mode
+- Responsive, accessible UI
+
+## Run modes & API
+
+- **Run via API**: This button is intentionally disabled until you toggle "Use local API (Flask)". The payload mirrors the settings (PIN length, charset, rate limits, captcha, lockout, etc.), which demonstrates how a server-backed workflow could work.
+- **API endpoint**: Defaults to `http://127.0.0.1:5000/api/bruteforce`. There is no server bundled with the repo—this field is purely illustrative so you can experiment with your own Flask or FastAPI service if you build one.
+- **Event log**: Every major action—simulation start, lockout trigger, PIN found, API success/failure—drops a timestamped entry into the log. It keeps the last 40 entries so you can scroll through a run and see what the simulation is thinking.
+- **Download report**: Exports a JSON summary of the settings, results (attempts, elapsed seconds, attempts/sec, found/not), and estimate data. Great for sharing on a security whiteboard or pairing it with a lesson plan.
+
+## How the simulation works (short)
+
+1. Build a search space from PIN length and charset.
+2. Enumerate candidates in a deterministic order.
+3. Compare the guess to a locally generated PIN.
+4. Track attempts, rate, and estimated time.
+5. Apply defenses (rate limit, lockout, captcha) to the timing model.
+
+This mirrors how brute-force attacks scale without ever touching a real system.
 
 ## Tests and development
 
-This repository includes a tiny test suite so the CI workflow can validate functionality automatically.
-
-Install dev dependencies locally:
+Install dev dependencies:
 
 ```bash
 python -m pip install -r requirements-dev.txt
 ```
 
-Run tests:
+Run the smoke tests that make sure the hero UI, buttons, and script stay wired up:
 
 ```bash
-pytest -q
+pytest tests/test_ui_assets.py
 ```
 
-Run formatting check (Black):
+## Security and ethics
 
-```bash
-black --check .
-```
-
-If you want to apply formatting:
-
-```bash
-black .
-```
-
-## Continuous Integration (GitHub Actions)
-
-This project includes a GitHub Actions workflow at `.github/workflows/ci.yml` that:
-
-- checks out the code
-- installs Python and dependencies
-- runs `black --check` (formatting enforcement)
-- runs the test suite (`pytest`)
-- runs the script in a deterministic mode to ensure the runnable example executes
-
-The CI is configured to run on pushes and pull requests to `main` / `master` and tests multiple Python versions.
-
-## Code notes (for readers)
-
-- The code is intentionally simple and split into small functions:
-  - `generate_pin(seed: Optional[int]) -> str` — returns a zero-padded PIN string.
-  - `attempt_pin(guess: str, actual_pin: str) -> str` — mock response function.
-  - `brute_force(...) -> Tuple[Optional[str], int]` — core brute-force loop, returns the found pin and attempts used.
-- Logging is used instead of uncontrolled prints so behavior can be quieted or made verbose via CLI flags.
-
-## Security & ethics
-
-This repository is for learning only. Do not, under any circumstances, use this code to target systems you do not own or have explicit permission to test. Performing unauthorized attacks is illegal and unethical.
-
-## Contributing
-
-Contributions are welcome: open issues or pull requests for bug fixes, clearer docs, or additional demo scenarios. Suggested small improvements:
-
-- Add a timing benchmark for different PIN lengths.
-- Add simulated rate limiting to demonstrate real-world mitigations.
-
-When contributing:
-
-1.  Fork the repo.
-2.  Create a branch for your change.
-3.  Run tests and formatting locally.
-4.  Open a pull request describing your change.
+This repo is for learning defensive security only. Unauthorized access attempts are illegal and unethical. Use this project to understand risks and build better protections, not to attack systems.
 
 ## License
 
-MIT — see the `LICENSE` file in this repository.
-
----
-
-If you'd like, I can also tidy formatting, add more tests, or add a `pyproject.toml` to pin tooling versions. Which would you like next?
+MIT — see LICENSE.
